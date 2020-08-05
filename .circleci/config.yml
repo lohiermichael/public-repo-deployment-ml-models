@@ -219,7 +219,7 @@ jobs:
           name: Train model
           command: |
             . venv/bin/activate
-            PYTHONPATH=./packages/neural_network_model python packages/neural_network_model/neural_network_model/train_pipeline.py
+            PYTHONPATH=./packages/neural_network_model python3 packages/neural_network_model/neural_network_model/train_pipeline.py
       - run: 
           name: Publish model to Gemfury
           command: |
