@@ -146,7 +146,7 @@ jobs:
       - run:
           name: Deploy to Heroku
           command: |
-            git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$APP_NAME.git my-progression:my-progression
+            git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$APP_NAME.git my-section-13:my-section-13
   
   # Job 6: Upload Docker image to Heroku
   section_11_build_and_push_to_heroku_docker:
@@ -195,6 +195,37 @@ jobs:
             eval docker login -u AWS -p $(aws ecr get-login-password --region ${AWS_DEFAULT_REGION}) https://${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/
             make build-ml-api-aws tag-ml-api push-ml-api-aws
             aws ecs update-service --cluster $AWS_CLUSTER_NAME --service $AWS_SERVICE_NAME --task-definition  $AWS_TASK_DEFINITION --force-new-deployment
+  
+  # Job 8: Train and upload the CNN model
+  section_13_train_and_upload_neural_network_model:
+    docker:
+      - image: circleci/python:3.6.4-stretch
+    working_directory: ~/project
+    steps:
+      - checkout
+      - *prepare_venv
+      - run: 
+          name: Install requirements
+          command: |
+            . venv/bin/activate
+            pip install -r packages/neural_network_model/requirements.txt
+      - run:
+          name: Fetch Training data - 2GB
+          command: |
+            . venv/bin/activate
+            chmod +x ./scripts/fetch_kaggle_large_dataset.sh
+            ./scripts/fetch_kaggle_large_dataset.sh
+      - run: 
+          name: Train model
+          command: |
+            . venv/bin/activate
+            PYTHONPATH=./packages/neural_network_model python3 packages/neural_network_model/neural_network_model/train_pipeline.py
+      - run: 
+          name: Publish model to Gemfury
+          command: |
+            . venv/bin/activate
+            chmod +x ./scripts/publish_model.sh
+            ./scripts/publish_model.sh ./packages/neural_network_model/
 
 workflows:
   version: 2
@@ -234,3 +265,13 @@ workflows:
       #       branches:
       #         only:
       #           - master
+      - section_13_train_and_upload_neural_network_model:
+          requires:
+            - test_regression_model
+            - test_ml_api
+            - section_9_differential_tests
+            # - train_and_upload_regression_model
+          # filters:
+          #   branches:
+          #     only:
+          #       - master

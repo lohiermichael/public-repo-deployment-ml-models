@@ -2,7 +2,7 @@
 
 # Building packages and uploading them to a Gemfury repository
 
-GEMFURY_URL=$PIP_EXTRA_INDEX_URL
+GEMFURY_URL=$GEMFURY_PUSH_URL
 
 # Find the setup.py file
 # We will run: ./scripts/publish_model.sh ./packages/regression_model/
